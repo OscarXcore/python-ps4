@@ -36,7 +36,6 @@ class Connection(object):
         self._port = port
         self._socket = None
         self._cipher = None
-        self._decipher = None
         self._random_seed = None
 
     def connect(self):
@@ -62,7 +61,7 @@ class Connection(object):
         _LOGGER.debug('Login')
         self._send_login_request()
         msg = self._recv_msg()
-        msg = self._decipher.decrypt(msg)
+        msg = self._cipher.decrypt(msg)
         _LOGGER.debug('RX: %s %s', len(msg), binascii.hexlify(msg))
 
     def standby(self):
@@ -70,7 +69,7 @@ class Connection(object):
         _LOGGER.debug('Request standby')
         self._send_standby_request()
         msg = self._recv_msg()
-        msg = self._decipher.decrypt(msg)
+        msg = self._cipher.decrypt(msg)
         _LOGGER.debug('RX: %s %s', len(msg), binascii.hexlify(msg))
 
     def start_title(self, title_id):
@@ -78,7 +77,7 @@ class Connection(object):
         _LOGGER.debug('Start title: %s', title_id)
         self._send_boot_request(title_id)
         msg = self._recv_msg()
-        msg = self._decipher.decrypt(msg)
+        msg = self._cipher.decrypt(msg)
         _LOGGER.debug('RX: %s %s', len(msg), binascii.hexlify(msg))
 
     def remote_control(self, op, hold_time=0):
@@ -103,11 +102,9 @@ class Connection(object):
 
     def _set_crypto_init_vector(self, init_vector):
         self._cipher = AES.new(self._random_seed, AES.MODE_CBC, init_vector)
-        self._decipher = AES.new(self._random_seed, AES.MODE_CBC, init_vector)
 
     def _reset_crypto_init_vector(self):
         self._cipher = None
-        self._decipher = None
 
     def _send_hello_request(self):
         fmt = Struct(
